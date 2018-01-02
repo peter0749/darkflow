@@ -29,26 +29,6 @@ def _save_ckpt(self, step, loss_profile):
     self.say('Checkpoint at step {}'.format(step))
     self.saver.save(self.sess, ckpt)
 
-    print("Upload model ckpt")
-    bucket_path = os.path.join(self.FLAGS.bucket, "models_4")
-    local_path = os.path.join(self.FLAGS.backup)
-    #call(["gsutil", "-m", "rsync", "-r", local_path, bucket_path])
-
-    print("Upload tensorboard for train")
-
-    bucket_path = os.path.join(self.FLAGS.bucket, "tb_train_4")
-    local_path = os.path.join(self.FLAGS.summary, "train")
-    #call(["gsutil", "-m", "rsync", "-r", local_path, bucket_path])
-
-    print("Upload tensorboard for valid")
-
-    bucket_path = os.path.join(self.FLAGS.bucket, "tb_val_4")
-    local_path = os.path.join(self.FLAGS.val_summary, "val")
-    #call(["gsutil", "-m", "rsync", "-r", local_path, bucket_path])
-
-    print("Finished saving checkpoint")
-
-
 def train(self):
 
     arg_steps = self.FLAGS.steps[1:-1] # remove '[' and ']'
