@@ -4,7 +4,7 @@ class argHandler(dict):
     __setattr__ = dict.__setitem__
     __delattr__ = dict.__delitem__
     _descriptions = {'help, --h, -h': 'show this super helpful message and exit'}
-    
+
     def setDefaults(self):
         self.define('imgdir', './sample_img/', 'path to testing directory with images')
         self.define('binary', './bin/', 'path to .weights directory')
@@ -35,11 +35,18 @@ class argHandler(dict):
         self.define('saveVideo', False, 'Records video from input video or camera')
         self.define('pbLoad', '', 'path to .pb protobuf file (metaLoad must also be specified)')
         self.define('metaLoad', '', 'path to .meta file generated during --savepb that corresponds to .pb file')
+        self.define('val_dataset', '../pascal/VOCdevkit/IMG/', 'path to validation dataset directory')
+        self.define('val_summary', './summary/', 'path to TensorBoard validation summaries directory')
+        self.define('val_annotation', '../pascal/VOCdevkit/ANN/', 'path to validation annotation directory')
+        self.define('bucket', 'gs://bucket_hand_detection_2', 'path to bucket')
+        self.define('steps', '[10,5000,10000,15000,20000]', 'steps for changing learning rate')
+        self.define('scales', '[1,0.1,0.1,0.1,0.1]', 'scales for changing learning rate')
+
 
     def define(self, argName, default, description):
         self[argName] = default
         self._descriptions[argName] = description
-    
+
     def help(self):
         print('Example usage: flow --imgdir sample_img/ --model cfg/yolo.cfg --load bin/yolo.weights')
         print('')

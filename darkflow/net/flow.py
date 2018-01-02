@@ -3,6 +3,7 @@ import time
 import numpy as np
 import tensorflow as tf
 import pickle
+from subprocess import call
 from multiprocessing.pool import ThreadPool
 
 train_stats = (
@@ -20,7 +21,7 @@ def _save_ckpt(self, step, loss_profile):
 
     profile = file.format(model, step, '.profile')
     profile = os.path.join(self.FLAGS.backup, profile)
-    with open(profile, 'wb') as profile_ckpt: 
+    with open(profile, 'wb') as profile_ckpt:
         pickle.dump(loss_profile, profile_ckpt)
 
     ckpt = file.format(model, step, '')
@@ -28,12 +29,42 @@ def _save_ckpt(self, step, loss_profile):
     self.say('Checkpoint at step {}'.format(step))
     self.saver.save(self.sess, ckpt)
 
+    print("Upload model ckpt")
+    bucket_path = os.path.join(self.FLAGS.bucket, "models_4")
+    local_path = os.path.join(self.FLAGS.backup)
+    call(["gsutil", "-m", "rsync", "-r", local_path, bucket_path])
+
+    print("Upload tensorboard for train")
+
+    bucket_path = os.path.join(self.FLAGS.bucket, "tb_train_4")
+    local_path = os.path.join(self.FLAGS.summary, "train")
+    call(["gsutil", "-m", "rsync", "-r", local_path, bucket_path])
+
+    print("Upload tensorboard for valid")
+
+    bucket_path = os.path.join(self.FLAGS.bucket, "tb_val_4")
+    local_path = os.path.join(self.FLAGS.val_summary, "val")
+    call(["gsutil", "-m", "rsync", "-r", local_path, bucket_path])
+
+    print("Finished saving checkpoint")
+
 
 def train(self):
+
+    arg_steps = self.FLAGS.steps[1:-1] # remove '[' and ']'
+    arg_steps = arg_steps.split(',')
+    arg_steps = np.array(arg_steps).astype(np.int32)
+    arg_scales = self.FLAGS.scales[1:-1]  # remove '[' and ']'
+    arg_scales = arg_scales.split(',')
+    arg_scales = np.array(arg_scales).astype(np.float32)
+    lr = self.FLAGS.lr
+
     loss_ph = self.framework.placeholders
     loss_mva = None; profile = list()
+    loss_mva_valid = None
 
     batches = self.framework.shuffle()
+    val_batches = self.framework.shuffle(training = False)
     loss_op = self.framework.loss
 
     for i, (x_batch, datum) in enumerate(batches):
@@ -43,12 +74,20 @@ def train(self):
         ))
 
         feed_dict = {
-            loss_ph[key]: datum[key] 
+            loss_ph[key]: datum[key]
                 for key in loss_ph }
         feed_dict[self.inp] = x_batch
         feed_dict.update(self.feed)
 
-        fetches = [self.train_op, loss_op, self.summary_op] 
+        feed_dict[self.learning_rate] = lr
+        idx = np.where(arg_steps[:] == i + 1)[0]
+        if len(idx):
+            new_lr = lr * arg_scales[idx][0]
+            lr = new_lr
+            feed_dict[self.learning_rate] = lr
+            print("\nSTEP {} - UPDATE LEARNING RATE TO {:.6}".format(i+1, new_lr))
+
+        fetches = [self.train_op, loss_op, self.summary_op]
         fetched = self.sess.run(fetches, feed_dict)
         loss = fetched[1]
 
@@ -65,6 +104,28 @@ def train(self):
         ckpt = (i+1) % (self.FLAGS.save // self.FLAGS.batch)
         args = [step_now, profile]
         if not ckpt: _save_ckpt(self, *args)
+
+        #validation time
+
+        (x_batch, datum) = next(val_batches)
+        feed_dict = {
+            loss_ph[key]: datum[key]
+                for key in loss_ph }
+        feed_dict[self.inp] = x_batch
+        feed_dict.update(self.feed)
+        feed_dict[self.learning_rate] = lr
+
+        fetches = [loss_op, self.summary_op]
+        fetched = self.sess.run(fetches, feed_dict)
+        loss = fetched[0]
+
+        if loss_mva_valid is None: loss_mva_valid = loss
+        loss_mva_valid = .9 * loss_mva_valid + .1 * loss
+
+        self.val_writer.add_summary(fetched[1], step_now)
+
+        form = 'VALIDATION step {} - loss {} - moving ave loss {}'
+        self.say(form.format(step_now, loss, loss_mva_valid))
 
     if ckpt: _save_ckpt(self, *args)
 
@@ -121,7 +182,7 @@ def predict(self):
                 os.path.join(inp_path, inp)), 0)), this_batch)
 
         # Feed to the net
-        feed_dict = {self.inp : np.concatenate(inp_feed, 0)}    
+        feed_dict = {self.inp : np.concatenate(inp_feed, 0)}
         self.say('Forwarding {} inputs ...'.format(len(inp_feed)))
         start = time.time()
         out = self.sess.run(self.out, feed_dict)
