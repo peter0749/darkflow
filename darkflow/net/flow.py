@@ -106,7 +106,7 @@ def train(self):
         if not ckpt: _save_ckpt(self, *args)
 
         #validation time
-
+        if i%self.FLAGS.val_step > 0: continue
         (x_batch, datum) = next(val_batches)
         feed_dict = {
             loss_ph[key]: datum[key]

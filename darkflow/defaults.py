@@ -40,6 +40,7 @@ class argHandler(dict):
         self.define('val_annotation', '../pascal/VOCdevkit/ANN/', 'path to validation annotation directory')
         self.define('bucket', 'gs://bucket_hand_detection_2', 'path to bucket')
         self.define('steps', '[10,5000,10000,15000,20000]', 'steps for changing learning rate')
+        self.define('val_step', 10, 'frequency of validation')
         self.define('scales', '[1,0.1,0.1,0.1,0.1]', 'scales for changing learning rate')
 
 
