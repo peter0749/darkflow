@@ -2,6 +2,8 @@ import numpy as np
 import cv2
 
 def imcv2_recolor(im, a = .1):
+        if np.random.binomial(1, .05):
+            im = cv2.GaussianBlur(im, (5,5), 0)
 	t = [np.random.uniform()]
 	t += [np.random.uniform()]
 	t += [np.random.uniform()]
