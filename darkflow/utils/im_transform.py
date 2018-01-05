@@ -6,7 +6,7 @@ def imcv2_recolor(im, a = .1):
     if np.random.binomial(1, .05):
         ksize = np.random.choice([3,5,7])
         im = cv2.GaussianBlur(im, (ksize,ksize), 0)
-    
+
     t = [np.random.uniform()]
     t += [np.random.uniform()]
     t += [np.random.uniform()]
@@ -27,13 +27,14 @@ def imcv2_recolor(im, a = .1):
 def imcv2_affine_trans(im):
     # Scale and translate
     h, w, c = im.shape
-    scale = np.random.uniform() / 8. + 1.
-    max_offx = (scale-1.) * w
-    max_offy = (scale-1.) * h
+    scalex = np.random.uniform() / 10. + 1.
+    scaley = np.random.uniform() / 10. + 1.
+    max_offx = (scalex-1.) * w
+    max_offy = (scaley-1.) * h
     offx = int(np.random.uniform() * max_offx)
     offy = int(np.random.uniform() * max_offy)
 
-    im = cv2.resize(im, (0,0), fx = scale, fy = scale)
+    im = cv2.resize(im, (0,0), fx = scalex, fy = scaley)
     im = im[offy : (offy + h), offx : (offx + w)]
     #flip = np.random.binomial(1, .5)
     flip = 0 # left eye, right eye
