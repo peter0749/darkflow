@@ -39,4 +39,4 @@ def imcv2_affine_trans(im):
     #flip = np.random.binomial(1, .5)
     flip = 0 # left eye, right eye
     if flip: im = cv2.flip(im, 1)
-    return im, [w, h, c], [scale, [offx, offy], flip]
+    return im, [w, h, c], [[scalex,scaley], [offx, offy], flip]
