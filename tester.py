@@ -50,9 +50,9 @@ def get_score(y_true, y_pred, h, w):
             pred_cm_re[ymin:(ymax+1), xmin:(xmax+1)] = 1.
         elif ele['label']=='le':
             pred_cm_le[ymin:(ymax+1), xmin:(xmax+1)] = 1.
-    face_score = jaccard_similarity_score(real_cm_face.flatten(), pred_cm_face.flatten())
-    re_score = jaccard_similarity_score(real_cm_re.flatten(), pred_cm_re.flatten())
-    le_score = jaccard_similarity_score(real_cm_le.flatten(), pred_cm_le.flatten())
+    face_score = jaccard_similarity_score(real_cm_face.flatten().astype(np.uint8), pred_cm_face.flatten().astype(np.uint8))
+    re_score = jaccard_similarity_score(real_cm_re.flatten().astype(np.uint8), pred_cm_re.flatten().astype(np.uint8))
+    le_score = jaccard_similarity_score(real_cm_le.flatten().astype(np.uint8), pred_cm_le.flatten().astype(np.uint8))
     return face_score, re_score, le_score
 
 
