@@ -50,8 +50,7 @@ def get_score(y_true, y_pred, h, w):
     face_precision, face_recall, face_f1, _ = precision_recall_fscore_support(real_cm_face.flatten().astype(np.uint8), pred_cm_face.flatten().astype(np.uint8))
     eye_score = jaccard_similarity_score(real_cm_eye.flatten().astype(np.uint8), pred_cm_eye.flatten().astype(np.uint8))
     eye_precision, eye_recall, eye_f1, _ = precision_recall_fscore_support(real_cm_eye.flatten().astype(np.uint8), pred_cm_eye.flatten().astype(np.uint8))
-    return face_score, face_precision, face_recall, face_f1,
-           eye_score, eye_precision, eye_recall, eye_f1
+    return face_score, face_precision, face_recall, face_f1, eye_score, eye_precision, eye_recall, eye_f1
 
 
 face_scores = []
